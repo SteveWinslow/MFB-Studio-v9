@@ -716,7 +716,7 @@ html[data-accent="indigo"]{--accent:#5145C8;--accent-bg:#ECEBFA}
       <div class="card"><div class="card-scroll"><table class="burn-table">
         <thead>
           <tr id="burn-head-designers"></tr>
-          <tr><th>Code</th><th>Project</th><th class="num">Total fee</th><th class="num">Qtrs</th><th class="num">Hrs</th><th class="num" title="Quoted fee ÷ hours spent — the rate you're drawing the fixed fee down at">Fee £/hr</th><th class="num" id="burn-th-cost">Int. cost @ £<span id="rate-label">50</span>/hr</th><th class="num" id="burn-th-conq" style="display:none">Con. quoted</th><th class="num" id="burn-th-cona" style="display:none">Con. actual</th><th class="num" id="burn-th-conv" style="display:none">Con. var.</th><th class="num">Remaining</th><th style="min-width:150px">% used</th><th>Status</th><th>Notes</th></tr>
+          <tr><th>Code</th><th>Project</th><th class="num">Total fee</th><th class="num">Qtrs</th><th class="num">Hrs</th><th class="num" id="burn-th-cost">Int. cost @ £<span id="rate-label">50</span>/hr</th><th class="num" id="burn-th-conq" style="display:none">Con. quoted</th><th class="num" id="burn-th-cona" style="display:none">Con. actual</th><th class="num" id="burn-th-conv" style="display:none">Con. var.</th><th class="num">Remaining</th><th style="min-width:150px">% used</th><th>Status</th><th>Notes</th></tr>
         </thead>
         <tbody id="burn-body"></tbody>
       </table></div></div>
@@ -2527,15 +2527,6 @@ function renderBurn() {
     if (status === "red") red++;
     else if (status === "amber") amber++;
     else if (status === "green") green++;
-    const eff = hrs > 0 && totalFee > 0 ? totalFee / hrs : null;
-    const effCol =
-      eff === null
-        ? "var(--text3)"
-        : eff >= state.rate * 2
-          ? "var(--green)"
-          : eff >= state.rate
-            ? "var(--amber)"
-            : "var(--red)";
     totQtrs += qtrs;
     totHrs += hrs;
     totCost += adjCost;
@@ -2546,23 +2537,22 @@ function renderBurn() {
         ? `<td class="num" style="font-size:12px;color:var(--text3)">${conQuoted > 0 ? fmtGBP(conQuoted) : "–"}</td><td class="num" style="font-size:12px">${conActual !== null ? fmtGBP(conActual) : '<span style="color:var(--text3)">not set</span>'}</td><td class="num" style="font-size:12px;font-weight:600;color:${conVar !== null && conVar > 0 ? "var(--red)" : conVar !== null && conVar < 0 ? "var(--green)" : "var(--text3)"}">${conVar !== null ? (conVar > 0 ? "+" : "") + fmtGBP(conVar) : "–"}</td>`
         : "";
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td><span class="code-chip">${esc(proj.code)}</span></td><td style="font-weight:500">${esc(proj.name)}</td><td class="num">${totalFee > 0 ? fmtGBP(totalFee) : "–"}</td><td class="num">${qtrs || "–"}</td><td class="num">${qtrs ? hrs.toFixed(1) : "–"}</td><td class="num" style="font-weight:600;color:${effCol}">${eff !== null ? "£" + Math.round(eff) : "–"}</td><td class="num">${fmtGBP(cost)}</td>${conCells}<td class="num" style="color:${rem < 0 ? "var(--red)" : "inherit"};font-weight:600">${totalFee > 0 ? fmtGBP(rem) : "–"}</td><td style="min-width:150px">${pctUsed !== null ? progressBar(pctUsed) : "–"}</td><td>${statusBadge(proj)}</td><td style="font-size:12px;color:var(--text3)">${esc(proj.notes)}</td>${showDesigners ? dQtrs.map((q) => `<td class="num" style="font-size:12px;color:var(--text2)">${q || "–"}</td>`).join("") : ""}`;
+    tr.innerHTML = `<td><span class="code-chip">${esc(proj.code)}</span></td><td style="font-weight:500">${esc(proj.name)}</td><td class="num">${totalFee > 0 ? fmtGBP(totalFee) : "–"}</td><td class="num">${qtrs || "–"}</td><td class="num">${qtrs ? hrs.toFixed(1) : "–"}</td><td class="num">${fmtGBP(cost)}</td>${conCells}<td class="num" style="color:${rem < 0 ? "var(--red)" : "inherit"};font-weight:600">${totalFee > 0 ? fmtGBP(rem) : "–"}</td><td style="min-width:150px">${pctUsed !== null ? progressBar(pctUsed) : "–"}</td><td>${statusBadge(proj)}</td><td style="font-size:12px;color:var(--text3)">${esc(proj.notes)}</td>${showDesigners ? dQtrs.map((q) => `<td class="num" style="font-size:12px;color:var(--text2)">${q || "–"}</td>`).join("") : ""}`;
     tbody.appendChild(tr);
   });
   if (cProjects.length) {
     const pctTot = totFee > 0 ? (totCost / totFee) * 100 : null;
-    const effTot = totHrs > 0 && totFee > 0 ? totFee / totHrs : null;
     const dTotals = _burnDesigners.map((d) =>
       cProjects.reduce((acc, p) => acc + calcDesignerProjectQuarters(d, p.name), 0),
     );
     const conTotCells = burnMode === "con" ? "<td></td><td></td><td></td>" : "";
     const tr = document.createElement("tr");
     tr.className = "total-row";
-    tr.innerHTML = `<td colspan="2">Totals</td><td class="num">${fmtGBP(totFee)}</td><td class="num">${totQtrs}</td><td class="num">${totHrs.toFixed(1)}</td><td class="num" style="font-weight:600">${effTot !== null ? "£" + Math.round(effTot) : "–"}</td><td class="num">${fmtGBP(totCost)}</td>${conTotCells}<td class="num" style="color:${totRem < 0 ? "var(--red)" : "inherit"}">${fmtGBP(totRem)}</td><td>${pctTot !== null ? progressBar(pctTot) : "–"}</td><td colspan="2"></td>${showDesigners ? dTotals.map((t) => `<td class="num">${t || "–"}</td>`).join("") : ""}`;
+    tr.innerHTML = `<td colspan="2">Totals</td><td class="num">${fmtGBP(totFee)}</td><td class="num">${totQtrs}</td><td class="num">${totHrs.toFixed(1)}</td><td class="num">${fmtGBP(totCost)}</td>${conTotCells}<td class="num" style="color:${totRem < 0 ? "var(--red)" : "inherit"}">${fmtGBP(totRem)}</td><td>${pctTot !== null ? progressBar(pctTot) : "–"}</td><td colspan="2"></td>${showDesigners ? dTotals.map((t) => `<td class="num">${t || "–"}</td>`).join("") : ""}`;
     tbody.appendChild(tr);
   }
   if (!cProjects.length)
-    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state">No C-projects yet.</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state">No C-projects yet.</div></td></tr>`;
   document.getElementById("burn-metrics").innerHTML =
     `<div class="metric"><div class="metric-label">C-Projects</div><div class="metric-value">${cProjects.length}</div></div><div class="metric red"><div class="metric-label">Red</div><div class="metric-value">${red}</div></div><div class="metric amber"><div class="metric-label">Amber</div><div class="metric-value">${amber}</div></div><div class="metric green"><div class="metric-label">Green</div><div class="metric-value">${green}</div></div><div class="metric"><div class="metric-label">Total fee</div><div class="metric-sub">${fmtGBP(totFee)}</div></div><div class="metric"><div class="metric-label">Internal cost</div><div class="metric-sub">${fmtGBP(totCost)}</div></div><div class="metric ${totRem < 0 ? "red" : ""}"><div class="metric-label">Fee remaining</div><div class="metric-sub">${fmtGBP(totRem)}</div></div><div class="metric blue"><div class="metric-label">Total hours</div><div class="metric-value">${totHrs.toFixed(0)}</div></div>`;
 }
@@ -4515,14 +4505,10 @@ function getPCTeam() {
   const y = state.year,
     m = state.month;
   const firstOfMonth = new Date(y, m, 1);
-  const staff = (state.allPreconStaffObjects || [])
+  // Pre-con staff only (managed in Settings). Active = no leave date, or leave date after this month.
+  return (state.allPreconStaffObjects || [])
     .filter((o) => !o.archiveDate || o.archiveDate > firstOfMonth)
     .map((o) => o.name);
-  const designers = (state.allDesignerObjects || [])
-    .filter((o) => !o.archiveDate || o.archiveDate > firstOfMonth)
-    .map((o) => o.name);
-  // Precon staff first, then designers, deduped
-  return [...new Set([...staff, ...designers])];
 }
 function updatePCPersonRows() {
   const wrap = document.getElementById("pc-person-rows");
@@ -4582,7 +4568,6 @@ async function savePreConstruction() {
   let saved = 0;
   for (const { name, hours, date } of entries) {
     const proj = state._projectByCode[projectCode];
-    const designerObj = state._designerByName[name];
     const staffObj = state.allPreconStaffObjects?.find((s) => s.name === name);
     const existing = state.preconstruction.find((r) => r.name === name && r.projectCode === projectCode);
     if (existing) {
@@ -4596,13 +4581,13 @@ async function savePreConstruction() {
         hours,
         date,
         projectId: proj?.id,
-        designerId: designerObj?.id || null,
+        designerId: null,
         preconStaffId: staffObj?.id || null,
       });
     }
     const payload = {
       project_id: proj?.id,
-      designer_id: designerObj?.id || null,
+      designer_id: null,
       precon_staff_id: staffObj?.id || null,
       hours,
       date: date || null,
